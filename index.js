@@ -59,12 +59,3 @@ function updateProcessingLEDState(on) {
 }
 
 console.log('Initialized');
-
-// Status LED
-const ledOut = new Gpio('27', 'out');
-setInterval(() => {
-  ledOut.writeSync(1);
-  setTimeout(() => {
-    ledOut.writeSync(0);
-  }, 500);
-}, 5000);
