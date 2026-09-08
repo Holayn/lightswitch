@@ -43,6 +43,8 @@ function watchButton() {
 
     pendingEdge = match[1].toLowerCase();
     if (quietTimer) clearTimeout(quietTimer);
+
+    // A lot of new lines can come in from a button press, since gpiomon reports any electrical transition.
     quietTimer = setTimeout(() => {
       // Only treat a settle on the edge that means "pressed" for your wiring.
       // pull-down wiring -> button press pulls line HIGH -> settle on 'rising'
