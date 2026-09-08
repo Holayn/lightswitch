@@ -1,31 +1,22 @@
-const { Gpio } = require('onoff');
+const { Chip, Line } = require('node-libgpiod');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-if (!process.env.KASA_TARGET) {
-  console.error('Missing environment variable KASA_TARGET');
-  return;
-}
-
 const LIGHTS_ALIASES = ['pendant', 'counter'];
-const DEBOUNCE_MS = 50;
 
 let isLightsOn = false;
 
-const button = new Gpio(17, 'in', 'both', { debounceTimeout: DEBOUNCE_MS });
-const ledOut = new Gpio(4, 'out');
+const chip = new Chip(0); // gpiochip0 — the main header on Pi 3/4; use the right chip number for Pi 5 (often 4)
+const button = new Line(chip, 17);
+const led = new Line(chip, 4);
 
-button.watch((err, value) => {
-  if (err) {
-    console.log('ERROR', err.stack);
-    return;
-  }
-  // Adjust this check depending on your wiring:
-  // value === 0 -> button pressed (pull-up, active-low)
-  // value === 1 -> button pressed (pull-down, active-high)
-  if (value === 0) {
-    onButtonClick();
-  }
+led.requestOutputMode();
+button.requestInputModeEvents({ edge: 'both', bias: 'disabled' });
+// adjust `bias` to 'pull-up' or 'pull-down' to match your wiring if `disabled` doesn't work as expected
+
+button.on('event', (event) => {
+  // event.eventType: 1 = rising edge, 2 = falling edge
+  onButtonClick();
 });
 
 async function onButtonClick() {
@@ -59,16 +50,7 @@ async function execKasa(deviceAlias, state, retries = 0) {
 }
 
 function updateProcessingLEDState(on) {
-  ledOut.writeSync(on ? 1 : 0);
+  led.setValue(on ? 1 : 0);
 }
-
-function cleanup() {
-  button.unexport();
-  ledOut.unexport();
-  process.exit();
-}
-
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
 
 console.log('Initialized');
