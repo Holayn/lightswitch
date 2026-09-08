@@ -67,6 +67,7 @@ function watchButton() {
 }
 
 async function onButtonClick() {
+  console.log(`${new Date().toISOString()}: button clicked`);
   updateProcessingLEDState(true);
   try {
     await toggleLights();
